@@ -304,6 +304,20 @@ function switchComponent(item: typeof items[0]) {
 watch(selectedItem, switchComponent)
 
 onMounted(() => {
-  switchComponent(items[0])
+  const urlParams = new URLSearchParams(window.location.search)
+  const componentId = urlParams.get("id")
+
+  if (componentId) {
+    const item = items.find((item) => item.id === Number(componentId))
+
+    if (item) {
+      switchComponent(item)
+      selectedItem.value = item
+    } else {
+      switchComponent(items[0])
+    }
+  } else {
+    switchComponent(items[0])
+  }
 })
 </script>
