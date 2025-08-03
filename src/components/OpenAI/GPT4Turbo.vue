@@ -171,44 +171,60 @@ async function fetchProjectsNumber() {
   }
 }
 
+// Updated animateDigits to fix the animation
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split("");
+  const maxTime = 8; // Total animation time for the most significant digit
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const animTl = gsap.timeline({
+    defaults: { ease: "none" },
+    repeat: 0,
+    paused: true
+  });
 
   digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const totalDigits = digitArray.length;
+    const id = `#n${statId}-${totalDigits - index - 1}`;
+    // Calculate duration such that right digits animate faster
+    const duration = maxTime / (10 ** index);
+    // Calculate the number of complete cycles each digit has to perform
+    const fullCycles = Math.floor(value / (10 ** index));
+    const finalDigit = parseInt(digit);
+    // Calculate repetitive animation and the final adjustment
+    const repeat = fullCycles % 10;
+    const overtravel = finalDigit + (index == 0 ? 0 : 10);
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    animTl.to(id, {
+      y: `-=${overtravel * 80}`, // 80 is the height of each number
+      repeat: repeat,
+      duration: duration,
+      clearProps: "all"
+    }, "p1");
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+    // Reset position after max complete rotations
+    if (overtravel >= 10) {
+      gsap.set(id, {y: `-=${finalDigit * 80}`});
+    }
+  });
 
-  animTl.play()
+  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" });
+
+  animTl.play();
 }
 
+// ! Added the type here
 function callback(entries: IntersectionObserverEntry[]) {
-  entries.forEach((entry) => {
+  entries.forEach(entry => {
     if (entry.isIntersecting) {
-      const statElement = entry.target
-      const numbElement = statElement.querySelector(".numb")
-      const elementId = numbElement?.id ?? ""
-      const idParts = elementId.split("-")
-      const statId = idParts[0]?.slice(1) ?? ""
-      const statIndex = parseInt(statId)
-      const statValue = !isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length
-        ? stats.value[statIndex]?.value ?? 0
-        : 0
+      const statId = entry.target.id.replace("stat-container-", "");
+      const stat = stats.value.find(s => s.id === parseInt(statId));
 
-      animateDigits(statId, statValue ?? 0)
-      observer?.unobserve(entry.target)
+      if (stat) {
+        animateDigits(statId, stat.value);
+        observer?.unobserve(entry.target);
+      }
     }
-  })
+  });
 }
 
 onMounted(async () => {

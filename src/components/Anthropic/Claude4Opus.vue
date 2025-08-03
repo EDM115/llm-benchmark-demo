@@ -179,12 +179,28 @@ function animateDigits(statId: string, value: number) {
 
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
-
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    const digitPosition = totalDigits - index - 1 // 0 for rightmost, increases leftward
+    const id = `#n${statId}-${digitPosition}`
+    
+    // Calculate how many complete rotations this digit needs
+    // For a number like 234:
+    // - Rightmost (ones): needs to go through 234 individual increments
+    // - Middle (tens): needs to go through 23 complete rotations + partial to 4
+    // - Leftmost (hundreds): needs to go through 2 complete rotations + partial to 3
+    
+    const valueUpToThisDigit = Math.floor(value / Math.pow(10, digitPosition))
+    const completeRotations = Math.floor(valueUpToThisDigit / 10)
+    const finalDigitValue = valueUpToThisDigit % 10
+    
+    // Total movement = complete rotations * 800 (full rotation) + final position
+    const totalMovement = (completeRotations * 800) + (finalDigitValue * 80)
+    
+    // Duration scales with position (leftmost is slowest)
+    const duration = maxTime / Math.pow(2, digitPosition)
+    
+    if (totalMovement > 0) {
+      animTl.to(id, { y: `-=${totalMovement}`, duration, ease: "none" }, 0)
+    }
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })

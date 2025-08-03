@@ -172,24 +172,65 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digits = String(value).split("");
+  const total = digits.length;
+  const maxTime = 8;           // total duration per-digit
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  // build a GSAP timeline; we'll control its overall progress below
+  const tl = gsap.timeline({ defaults: { ease: "none" }, paused: true });
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+  digits.forEach((char, idx) => {
+    const d = Number(char);
+    const posFromRight = total - idx - 1;
+    const selector = `#n${statId}-${posFromRight}`;
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    // divisor = how many units corresponds to one full 10-step cycle
+    // e.g. for the 1's place posFromRight=0 → divisor=10
+    //       for the 10's place posFromRight=1 → divisor=100
+    const divisor = 10 ** (posFromRight + 1);
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+    // how many *full* 0→9→0 cycles this wheel needs
+    const fullCycles = Math.floor(value / divisor);
 
-  animTl.play()
+    // then whatever's left over for just a partial cycle
+    const partialSteps = Math.floor((value % divisor) / (10 ** posFromRight));
+
+    const segments = fullCycles + (partialSteps > 0 ? 1 : 0);
+    if (segments === 0) {
+      // no movement needed (digit is 0 and nothing above it)
+      return;
+    }
+
+    // each segment (whether a full 10-step cycle or the one partial sweep)
+    // gets an equal share of the total maxTime
+    const segDur = maxTime / segments;
+
+    // 1) schedule all the full 10-step cycles back-to-back
+    if (fullCycles > 0) {
+      tl.to(selector, {
+        y: "-=800",            // 10 steps × 80px each
+        repeat: fullCycles - 1, // so that we get exactly `fullCycles` loops
+        duration: segDur * fullCycles
+      }, 0);
+    }
+
+    // 2) schedule the final partial sweep
+    if (partialSteps > 0) {
+      tl.to(selector, {
+        y: `-=${partialSteps * 80}`,  // e.g. if d=7, that's 7×80px
+        duration: segDur
+      }, fullCycles * segDur);
+    }
+  });
+
+  // now run that timeline from 0→1 over `maxTime` seconds,
+  // with a nice power3.inOut easing on the overall progress
+  gsap.to(tl, {
+    duration: maxTime,
+    progress: 1,
+    ease: "power3.inOut"
+  });
+  tl.play();
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

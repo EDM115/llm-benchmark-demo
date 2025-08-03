@@ -180,11 +180,14 @@ function animateDigits(statId: string, value: number) {
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
     const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
+    const duration = (index === 0 ? maxTime : maxTime / (10 ** index))
     const movement = digit === "0" ? 800 : Number(digit) * 80
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    // Calculate the number of turns for each digit
+    const turns = (index === 0 ? 1 : 10 ** index)
+
+    // Animate each digit independently
+    animTl.to(id, { y: `-=${movement}`, repeat: turns - 1, duration }, "p1")
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })

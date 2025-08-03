@@ -172,24 +172,32 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
-
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const digitArray = String(value).padStart(5, '0').split(""); // Pad for smoothness, optional
+  const baseDuration = 2; // seconds, tweak as needed
+  const totalDigits = digitArray.length;
 
   digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const pow = totalDigits - index - 1; // leftmost digit = biggest pow
+    const cycles = pow === 0 ? 0 : Math.pow(10, pow); // rightmost: cycles=0, next: cycles=10, etc
+    const finalDigit = Number(digit);
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    // The "numb" element contains "0 1 2 3 4 5 6 7 8 9 0"
+    // Each digit is 80px tall (as per your style)
+    // So to land on 'digit' after 'cycles' cycles: movement = (cycles * 10 + finalDigit) * 80
+    // To animate upwards, move -Y
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+    const movement = -80 * (cycles * 10 + finalDigit);
 
-  animTl.play()
+    const duration = baseDuration * Math.pow(10, pow) / Math.pow(10, totalDigits - 1);
+
+    const selector = `#n${statId}-${pow}`;
+
+    gsap.to(selector, {
+      y: movement,
+      duration,
+      ease: "cubic-bezier(0.32,0.72,0.38,0.98)", // nice "rolling" feel
+    });
+  });
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

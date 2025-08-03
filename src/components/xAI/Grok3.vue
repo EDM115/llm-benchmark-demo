@@ -2,7 +2,7 @@
   <v-col>
     <v-row
       v-for="stat in stats"
-      id="statsCounters"
+      :id="'statsCounters-' + stat.id"
       :key="stat.id"
       class="d-flex justify-center align-center"
     >
@@ -11,14 +11,8 @@
           {{ stat.name }}
         </v-card-title>
         <v-card-text>
-          <div
-            id="container"
-            class=""
-          >
-            <div
-              id="counter"
-              class="middle d-flex justify-center align-center"
-            >
+          <div id="container" class="">
+            <div id="counter" class="middle d-flex justify-center align-center">
               <div
                 v-for="(digit, index) in String(stat.value).split('')"
                 :id="'digit-container-' + stat.id + '-' + ((String(stat.value).split('').length) - index - 1)"
@@ -29,7 +23,9 @@
                   :id="'n' + stat.id + '-' + ((String(stat.value).split('').length) - index - 1)"
                   class="numb"
                 >
-                  0 1 2 3 4 5 6 7 8 9 0
+                  <template v-for="n in 10" :key="n">
+                    0 1 2 3 4 5 6 7 8 9
+                  </template>
                 </div>
                 <div class="gradmask fullframe" />
               </div>
@@ -38,42 +34,6 @@
         </v-card-text>
       </v-card>
     </v-row>
-    <!-- <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://stats.edm115.dev/api?username=EDM115&count_private=true&show_icons=true&cache_seconds=1800&bg_color=30,833ab4,fd1d1d,fcb045&include_all_commits=True&title_color=fff&icon_color=fff&border_color=000&text_color=70ffff"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://stats.edm115.dev/api/top-langs/?username=EDM115&langs_count=10&layout=compact&theme=merko&bg_color=30,833ab4,fd1d1d,fcb045&title_color=fff&icon_color=fff&border_color=000&text_color=70ffff"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-readme-activity-graph.vercel.app/graph?username=EDM115&theme=dracula&line=50fa7b&point=ff79c6&area_color=f1fa8c&bg_color=282a36&color=8be9fd&title_color=8be9fd&area=true&hide_border=true&radius=8"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-readme-streak-stats.herokuapp.com/?user=EDM115&theme=dracula&hide_border=true&date_format=j%20M%5B%20Y%5D"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-profile-trophy.vercel.app/?username=EDM115&theme=dracula&no-bg=true&no-frame=true"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://lanyard.cnrad.dev/api/625240117560475658?theme=dark&bg=282a36&borderRadius=30&animated=true&idleMessage=No%20RPC%20activity%20detected&showDisplayName=true"
-      />
-    </v-row> -->
   </v-col>
 </template>
 
@@ -174,21 +134,20 @@ async function fetchProjectsNumber() {
 function animateDigits(statId: string, value: number) {
   const digitArray = String(value).split("")
   const maxTime = 8
-
+  const baseCycles = 5 // Base number of full cycles for animation
   const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
 
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
-
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    const positionFromRight = totalDigits - index - 1
+    // Rightmost digit moves fastest; leftmost moves slowest
+    const fullCycles = baseCycles * Math.pow(10, positionFromRight)
+    const id = `#n${statId}-${positionFromRight}`
+    const movement = fullCycles * 800 + Number(digit) * 80
+    animTl.to(id, { y: `-=${movement}`, duration: maxTime }, "p1")
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
   animTl.play()
 }
 
@@ -196,16 +155,12 @@ function callback(entries: IntersectionObserverEntry[]) {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
       const statElement = entry.target
-      const numbElement = statElement.querySelector(".numb")
-      const elementId = numbElement?.id ?? ""
-      const idParts = elementId.split("-")
-      const statId = idParts[0]?.slice(1) ?? ""
+      const statId = statElement.id.split("-")[1] || "0"
       const statIndex = parseInt(statId)
       const statValue = !isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length
         ? stats.value[statIndex]?.value ?? 0
         : 0
-
-      animateDigits(statId, statValue ?? 0)
+      animateDigits(statId, statValue)
       observer?.unobserve(entry.target)
     }
   })
@@ -223,7 +178,7 @@ onMounted(async () => {
     rootMargin: "0px",
     threshold: 0.8,
   })
-  document.querySelectorAll("#statsCounters").forEach((el) => observer?.observe(el))
+  document.querySelectorAll("[id^='statsCounters-']").forEach((el) => observer?.observe(el))
 })
 </script>
 

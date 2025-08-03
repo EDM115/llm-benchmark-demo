@@ -172,24 +172,45 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split("");
+  const totalDigits = digitArray.length;
+  const durationPerTurn = 0.3; // seconds for each "turn" of a digit
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  // Compute the number of "turns" each digit must spin
+  // Left digit: fewer turns, rightmost: more
+  for (let i = 0; i < totalDigits; i++) {
+    const digitIndex = totalDigits - i - 1; // rightmost: 0
+    const digit = Number(digitArray[i]);
+    const id = `#n${statId}-${i}`;
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    // Digit i must do:
+    // (for all digits except the last) number of [left digit "turns" - 1] * 10
+    // plus just enough to end on its digit
+    let turns = 1; // how many times this digit "spins" fully (0-9 cycles)
+    // The leftmost digit only "steps up" to its value
+    // All other digits must advance 10 times for every increment to the left
+    if (i < totalDigits - 1) {
+      turns = Math.pow(10, totalDigits - i - 1);
+    }
+    // For smoother effect, scale duration by pow
+    const totalMovement = turns * 10 + digit; // <= move through 0-9 'turns' and land at the right value
+    const movement = totalMovement * 80;
+    const duration = turns * durationPerTurn + (digit / 10) * durationPerTurn;
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
-
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+    gsap.to(id, {
+      y: `-=${movement}`,
+      duration,
+      ease: "power2.inOut",
+      onComplete: () => {
+        // Ensure it lands exactly on value after animation
+        // (To handle rounding errors)
+        const element = document.querySelector(id) as HTMLElement;
+        if (element) {
+          element.style.transform = `translateY(-${digit * 80}px)`;
+        }
+      },
+    });
+  }
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

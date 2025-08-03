@@ -171,25 +171,36 @@ async function fetchProjectsNumber() {
   }
 }
 
+// ! Added the types here
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split("").map(Number);
+  const maxTime = 2; // Adjust animation duration as needed
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const timeline = gsap.timeline({ ease: "power3.inOut" });
+
+  const totalDigits = digitArray.length;
 
   digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const digitPosition = totalDigits - index - 1;
+    const digitContainer = `#n${statId}-${digitPosition}`;
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    // Calculate rotations needed
+    const rotations = digit + (index === 0 ? 0 : 10);
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+    // Calculate duration for this digit (left digits animate slower)
+    const duration = maxTime / (10 ** index);
 
-  animTl.play()
+    // Animate the digit
+    timeline.to(
+      digitContainer,
+      {
+        y: `-=${80 * rotations}`,
+        duration: duration,
+        ease: "none",
+      },
+      0 // Start all animations simultaneously
+    );
+  });
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

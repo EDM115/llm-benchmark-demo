@@ -172,22 +172,29 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split('')
+  const maxTime = 2 // Reduced for better UX
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const animTl = gsap.timeline({ 
+    defaults: { ease: "power2.out" },
+    repeat: 0,
+    paused: true 
+  })
 
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
-
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    const digitIndex = totalDigits - index - 1
+    const id = `#n${statId}-${digitIndex}`
+    
+    // Direct positioning - no revolutions
+    const movement = Number(digit) * 80
+    
+    animTl.to(
+      id, 
+      { y: -movement, duration: maxTime },
+      index === 0 ? 0 : 0 // Start all animations together
+    )
   })
-
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
 
   animTl.play()
 }
@@ -276,14 +283,31 @@ onMounted(async () => {
   font: "Fira Code", monospace;
   font-size: 50px;
   font-weight: bold;
-  height: 100%;
   width: 100%;
-  line-height: 80px;
   z-index: 1;
+
+  /* Ensure proper vertical alignment */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  
+  /* Match line-height to container height */
+  line-height: 80px;
+  height: 80px;
+  transition: none;
 }
 
+/* ADDED - Individual digit styling */
+.numb span {
+  display: block;
+  height: 80px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Remove gradient masks if not needed */
 .gradmask {
-  position: absolute;
-  background: transparent;
+  display: none;
 }
 </style>

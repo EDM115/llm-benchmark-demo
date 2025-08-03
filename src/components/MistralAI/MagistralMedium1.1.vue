@@ -174,21 +174,34 @@ async function fetchProjectsNumber() {
 function animateDigits(statId: string, value: number) {
   const digitArray = String(value).split("")
   const maxTime = 8
-
   const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
 
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
     const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const digitValue = parseInt(digit)
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    // Calculate duration based on position (left digits move slower)
+    const duration = maxTime / Math.pow(10, index)
+
+    // Calculate how many full rotations (0-9) we need for this digit
+    // For rightmost digit: full rotations = digitValue
+    // For other digits: full rotations = 10 * digitValue (since each left digit change causes 10 changes in the right)
+    const fullRotations = index === digitArray.length - 1
+      ? digitValue
+      : 10 * digitValue + (index < digitArray.length - 1 ? 0 : digitValue)
+
+    // The total movement needed is (fullRotations * 10) * 80px (height of each digit)
+    // Plus the final position which is (digitValue * 80px)
+    const totalMovement = (fullRotations) * 800 + (digitValue * 80)
+
+    animTl.to(id, {
+      y: `-=${totalMovement}`,
+      duration: duration,
+    }, index === 0 ? 0 : undefined) // Start all animations at the same time
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
   animTl.play()
 }
 

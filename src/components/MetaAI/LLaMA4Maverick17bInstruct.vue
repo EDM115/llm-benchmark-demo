@@ -172,24 +172,35 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split("").map(Number);
+  const maxTime = 8;
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0 });
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+  for (let i = digitArray.length - 1; i >= 0; i--) {
+    const digit = digitArray[i];
+    const id = `#n${statId}-${i}`;
+    const duration = maxTime / (2 ** (digitArray.length - 1 - i));
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    if (i === digitArray.length - 1) {
+      animTl.to(id, { y: `-=${digit * 80}`, duration }, 0);
+    } else {
+      const repeat = 10;
+      animTl.to(id, {
+        y: `-=${repeat * 800}`,
+        duration: duration * repeat,
+        ease: "none",
+        repeat: digit,
+        modifiers: {
+          y: (y) => {
+            return (parseFloat(y) % 800) + "px";
+          },
+        },
+      }, 0);
+    }
+  }
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+  animTl.play();
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

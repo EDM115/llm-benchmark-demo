@@ -172,24 +172,47 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digits = String(value).split('').reverse(); // Reverse to process from right to left
+  const duration = 2; // Base duration in seconds
+  const digitElements = digits.map((_, i) => 
+    document.querySelector(`#n${statId}-${i}`) as HTMLElement
+  );
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  // Reset all digits to 0 position
+  digitElements.forEach(el => {
+    gsap.set(el, { y: 0 });
+  });
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+  // Create a master timeline
+  const tl = gsap.timeline();
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
-
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+  digits.forEach((digitStr, position) => {
+    const digit = parseInt(digitStr);
+    const element = digitElements[position];
+    const isLastDigit = position === 0;
+    const isFirstDigit = position === digits.length - 1;
+    
+    // Calculate how many full rotations the digit needs to do
+    // ! Added the number cast here
+    const rotations = isLastDigit ? digit : digit + 10 * (Number(digits[position + 1]) || 0);
+    
+    // Calculate duration based on position (left digits get longer duration)
+    const digitDuration = duration * Math.pow(0.1, position);
+    
+    // Animate this digit
+    tl.to(element, {
+      y: `-=${rotations * 80}`,
+      duration: digitDuration,
+      ease: "power2.out",
+      modifiers: {
+        y: (y) => {
+          // Wrap around when passing 9 (880 is 11 * 80, since we have "0 1 2 3 4 5 6 7 8 9 0")
+          const yNum = parseFloat(y);
+          return `${((yNum % 880) + 880) % 880}px`;
+        }
+      }
+    }, 0); // All animations start at same time but with different durations
+  });
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

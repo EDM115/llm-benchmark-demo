@@ -180,11 +180,22 @@ function animateDigits(statId: string, value: number) {
   digitArray.forEach((digit, index) => {
     const totalDigits = digitArray.length
     const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const placeValue = 10 ** (totalDigits - index - 1)
+    const targetValue = Math.floor(value / placeValue) % 10
+    const fullRotations = Math.floor(value / placeValue / 10)
+    
+    const duration = maxTime / (10 ** index)
+    const movement = (fullRotations * 10 + targetValue) * 80
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    animTl.to(id, { 
+      y: `-=${movement}`, 
+      duration,
+      modifiers: {
+        y: function(y) {
+          return (parseFloat(y) % 800) + "px";
+        }
+      }
+    }, 0)
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })

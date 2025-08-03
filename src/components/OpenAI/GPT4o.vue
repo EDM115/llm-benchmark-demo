@@ -172,24 +172,31 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digits = String(value).split("").map(Number);
+  const maxTime = 2; // base duration for the slowest digit
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  digits.forEach((digit, index) => {
+    const totalDigits = digits.length;
+    const id = `#n${statId}-${totalDigits - index - 1}`;
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const speedFactor = 2 ** index; // rightmost moves fastest
+    const duration = maxTime / speedFactor;
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    // Instead of just moving once, calculate total wraps
+    const wraps = speedFactor; // how many full 0-9 cycles
+    const finalOffset = digit * 80; // final digit position
+    const totalDistance = wraps * 10 * 80 + finalOffset;
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+    gsap.fromTo(
+      id,
+      { y: 0 },
+      {
+        y: `-=${totalDistance}`,
+        duration,
+        ease: "none"
+      }
+    );
+  });
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

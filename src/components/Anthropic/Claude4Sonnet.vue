@@ -38,42 +38,6 @@
         </v-card-text>
       </v-card>
     </v-row>
-    <!-- <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://stats.edm115.dev/api?username=EDM115&count_private=true&show_icons=true&cache_seconds=1800&bg_color=30,833ab4,fd1d1d,fcb045&include_all_commits=True&title_color=fff&icon_color=fff&border_color=000&text_color=70ffff"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://stats.edm115.dev/api/top-langs/?username=EDM115&langs_count=10&layout=compact&theme=merko&bg_color=30,833ab4,fd1d1d,fcb045&title_color=fff&icon_color=fff&border_color=000&text_color=70ffff"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-readme-activity-graph.vercel.app/graph?username=EDM115&theme=dracula&line=50fa7b&point=ff79c6&area_color=f1fa8c&bg_color=282a36&color=8be9fd&title_color=8be9fd&area=true&hide_border=true&radius=8"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-readme-streak-stats.herokuapp.com/?user=EDM115&theme=dracula&hide_border=true&date_format=j%20M%5B%20Y%5D"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://github-profile-trophy.vercel.app/?username=EDM115&theme=dracula&no-bg=true&no-frame=true"
-      />
-    </v-row>
-    <v-row class="d-flex justify-center align-center">
-      <v-img
-        :draggable="false"
-        src="https://lanyard.cnrad.dev/api/625240117560475658?theme=dark&bg=282a36&borderRadius=30&animated=true&idleMessage=No%20RPC%20activity%20detected&showDisplayName=true"
-      />
-    </v-row> -->
   </v-col>
 </template>
 
@@ -173,23 +137,50 @@ async function fetchProjectsNumber() {
 
 function animateDigits(statId: string, value: number) {
   const digitArray = String(value).split("")
-  const maxTime = 8
+  const totalDigits = digitArray.length
+  const animationDuration = 3 // Total animation time in seconds
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
-
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
-
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+  // Reset all digits to initial position
+  digitArray.forEach((_, index) => {
+    const digitPosition = totalDigits - index - 1
+    const id = `#n${statId}-${digitPosition}`
+    gsap.set(id, { y: 0 })
   })
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+  // Calculate how many full rotations each digit needs based on its place value
+  digitArray.forEach((finalDigit, index) => {
+    const digitPosition = totalDigits - index - 1 // 0 is rightmost, higher numbers are leftmost
+    const id = `#n${statId}-${digitPosition}`
+    const placeValue = 10 ** digitPosition
+    
+    // Calculate total rotations this digit needs to make
+    // For example, if animating to 1234:
+    // - Rightmost digit (4): goes directly to 4 = 4 steps
+    // - Next digit (3): goes to 3, plus all the cycles from rightmost = 3 + Math.floor(1234/10) = 3 + 123 = 126 steps
+    // - Next digit (2): goes to 2, plus all cycles from digits to the right = 2 + Math.floor(1234/100) = 2 + 12 = 14 steps
+    // - Leftmost digit (1): goes to 1, plus all cycles from digits to the right = 1 + Math.floor(1234/1000) = 1 + 1 = 2 steps
+    
+    const directSteps = parseInt(finalDigit)
+    const cyclesFromRight = Math.floor(value / placeValue) - Math.floor(value / (placeValue * 10)) * 10
+    const totalSteps = directSteps + (Math.floor(value / placeValue) - cyclesFromRight) * 10
+    
+    // Each step is 80px (height of one digit in the strip)
+    const totalMovement = totalSteps * 80
+    
+    // Calculate speed: rightmost digits move fastest, leftmost slowest
+    // The speed multiplier ensures rightmost digit completes its animation in the full duration
+    // while leftmost digits move much slower
+    const speedMultiplier = Math.pow(10, digitPosition)
+    const digitDuration = animationDuration * speedMultiplier / Math.pow(10, totalDigits - 1)
+    
+    if (totalMovement > 0) {
+      gsap.to(id, {
+        y: -totalMovement,
+        duration: digitDuration,
+        ease: "power2.inOut"
+      })
+    }
+  })
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

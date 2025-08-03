@@ -171,25 +171,39 @@ async function fetchProjectsNumber() {
   }
 }
 
+const DIGIT_H = 80           // pixel height of one glyph
+const MAX_TIME = 8           // total time for the left-most wheel
+
+function buildStrip(copies = 1) {
+  return Array(copies).fill('0 1 2 3 4 5 6 7 8 9').join(' ') + ' 0'
+}
+
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digits = String(value).split('').map(Number)
+  const total  = digits.length
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  digits.forEach((digit, idx) => {
+    // idx = 0 ➜ left-most (slowest) digit
+    const wheelId  = `#n${statId}-${total - idx - 1}`
+    const wheelEl  = document.querySelector<HTMLElement>(wheelId)
+    if (!wheelEl) return
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    /* ---------- 1. make the strip long enough ---------- */
+    const fullTurns = idx === 0 ? 0 : (2 ** idx) * 2 - 1       // 1, 3, 7, …
+    //  +2 so we still have a spare cycle for the overshoot ease-out
+    wheelEl.textContent = buildStrip(fullTurns + 2)
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    /* ---------- 2. compute travel distance & duration --- */
+    const distance = (fullTurns * 10 + digit) * DIGIT_H * -1   // negative = up
+    const duration = MAX_TIME / (2 ** idx)                     // 8, 4, 2, 1, …
+
+    /* ---------- 3. animate! ----------------------------- */
+    gsap.fromTo(
+      wheelEl,
+      { y: 0 },
+      { y: distance, duration, ease: 'power3.inOut' }
+    )
   })
-
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

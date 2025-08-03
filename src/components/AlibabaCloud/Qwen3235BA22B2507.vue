@@ -177,14 +177,20 @@ function animateDigits(statId: string, value: number) {
 
   const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
 
-  digitArray.forEach((digit, index) => {
+  digitArray.forEach((_, index) => {
     const totalDigits = digitArray.length
     const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
-
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+    
+    // Calculate the value of the number formed by all digits up to and including this one
+    const currentValue = parseInt(digitArray.slice(0, index + 1).join(''), 10)
+    
+    // Duration should be the same for all digits
+    const duration = maxTime
+    
+    // The movement in pixels: each digit is 80px high
+    const movement = currentValue * 80
+    
+    animTl.to(id, { y: `-=${movement}`, duration }, "p1")
   })
 
   gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })

@@ -172,24 +172,67 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digitArray = String(value).split("");
+  const maxTime = 8; // Total animation duration in seconds
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  const animTl = gsap.timeline({
+    defaults: { ease: "none" },
+    repeat: 0,
+    paused: true
+  });
 
   digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    const totalDigits = digitArray.length;
+    const id = `#n${statId}-${totalDigits - index - 1}`;
+    const digitValue = parseInt(digit);
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
+    // Calculate duration based on position (left digits move slower)
+    const duration = maxTime / Math.pow(10, index);
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+    // For the first digit (leftmost), we just animate to its value
+    if (index === 0) {
+      const movement = digitValue * 80;
+      animTl.to(id, {
+        y: `-=${movement}`,
+        duration: duration
+      }, 0);
+    }
+    // For other digits, we need to animate through all possible values
+    else {
+      // Calculate how many full rotations we need (0-9 cycle)
+      const fullRotations = Math.floor(digitValue / 10);
+      const remainder = digitValue % 10;
 
-  animTl.play()
+      // Animate full rotations first
+      if (fullRotations > 0) {
+        animTl.to(id, {
+          y: `-=800`, // 10 digits * 80px each
+          duration: duration * 0.9 * fullRotations,
+          repeat: fullRotations - 1
+        }, 0);
+      }
+
+      // Then animate the remainder
+      if (remainder > 0) {
+        const startTime = fullRotations > 0
+          ? duration * 0.9 * fullRotations
+          : 0;
+
+        animTl.to(id, {
+          y: `-=${remainder * 80}`,
+          duration: duration * 0.1
+        }, startTime);
+      }
+    }
+  });
+
+  gsap.to(animTl, {
+    duration: maxTime,
+    progress: 1,
+    ease: "power3.inOut"
+  });
+
+  animTl.play();
 }
 
 function callback(entries: IntersectionObserverEntry[]) {

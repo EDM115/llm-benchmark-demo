@@ -171,42 +171,87 @@ async function fetchProjectsNumber() {
   }
 }
 
+/**
+ * Animates the digits of a number in an odometer/slot-machine style.
+ * Each digit wheel spins, with higher-place-value digits spinning slower.
+ *
+ * @param {string} statId - The ID of the stat being animated (e.g., "0", "1").
+ * @param {number} value - The final number to animate to.
+ */
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const integerValue = Math.floor(value)
+  const digitArray = String(integerValue).split("")
+  const maxTime = 4 // Total animation duration in seconds
+  const digitHeight = 80 // Height of a single digit in pixels, from CSS
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  // A master timeline allows us to apply a single ease function to all animations
+  const tl = gsap.timeline({ paused: true })
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+  // We iterate through digits from right to left (ones, tens, hundreds...)
+  const reversedDigits = [...digitArray].reverse()
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
+  reversedDigits.forEach((finalDigitStr, place) => {
+    // `place` is the power of 10 (0 for ones, 1 for tens, etc.)
+    const id = `#n${statId}-${place}`
+    const element = document.querySelector(id)
+    if (!element)
+      return
+
+    // Reset starting position to '0'
+    gsap.set(element, { y: 0 })
+
+    const finalDigit = Number(finalDigitStr)
+
+    // Calculate how many full 0-9 rotations this wheel must perform.
+    // For 567, the tens wheel (place=1) does floor(567 / 100) = 5 full rotations.
+    const fullSpins = Math.floor(integerValue / (10 ** (place + 1)))
+
+    const stripHeight = 10 * digitHeight // The pixel height of a full 0-9 spin
+    const finalDigitY = -finalDigit * digitHeight
+
+    // The total distance is the sum of all full spins plus the final digit's position.
+    // We use negative values because we are moving the strip upwards.
+    const totalY = -(fullSpins * stripHeight) + finalDigitY
+
+    // Add the animation for this single digit to the master timeline.
+    // They all start at time 0 and have a duration of 1 (it will be scaled by the master tween).
+    tl.to(element, { y: totalY, duration: 1, ease: "none" }, 0)
   })
 
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+  // Create a tween that "scrubs" the master timeline from start to finish.
+  // This applies a single, smooth ease to the entire complex animation.
+  gsap.to(tl, { progress: 1, duration: maxTime, ease: "power3.inOut" })
 
-  animTl.play()
+  tl.play()
 }
 
 function callback(entries: IntersectionObserverEntry[]) {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
-      const statElement = entry.target
+      const statElement = entry.target // This is the v-row being observed
+      // Find the first digit to parse the stat's ID
       const numbElement = statElement.querySelector(".numb")
-      const elementId = numbElement?.id ?? ""
+      if (!numbElement)
+        return
+
+      const elementId = numbElement.id // e.g., "n0-2"
       const idParts = elementId.split("-")
       const statId = idParts[0]?.slice(1) ?? ""
-      const statIndex = parseInt(statId)
-      const statValue = !isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length
-        ? stats.value[statIndex]?.value ?? 0
-        : 0
+      const statIndex = parseInt(statId, 10)
 
-      animateDigits(statId, statValue ?? 0)
-      observer?.unobserve(entry.target)
+      if (!isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length) {
+        const statObject = stats.value[statIndex]
+        if (statObject) {
+          // The 'value' property can be a raw number or a Ref.
+          // This safely unwraps the value if it's a ref.
+          // ! Replaced the bogus condition (value of a value)
+          // ! statObject.value?.value ?? statObject.value  =>  statObject.value
+          const valueToAnimate = statObject.value
+
+          animateDigits(statId, valueToAnimate as number)
+          observer?.unobserve(entry.target)
+        }
+      }
     }
   })
 }
@@ -223,7 +268,8 @@ onMounted(async () => {
     rootMargin: "0px",
     threshold: 0.8,
   })
-  document.querySelectorAll("#statsCounters").forEach((el) => observer?.observe(el))
+  // The ID "statsCounters" is duplicated, which is invalid HTML, but querySelectorAll still works.
+  document.querySelectorAll("#statsCounters").forEach(el => observer?.observe(el))
 })
 </script>
 

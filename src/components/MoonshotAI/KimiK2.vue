@@ -171,25 +171,33 @@ async function fetchProjectsNumber() {
   }
 }
 
+// animateDigits.ts
 function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
+  const digits = String(value).padStart(1, '0').split('');
+  const steps   = digits.map(d => +d);            // numeric targets
+  const factor  = 0.8;                            // master duration in seconds
+  const tl      = gsap.timeline({ paused: true });
 
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
+  digits.forEach((_, i) => {
+    const target   = steps[i];
+    const cycles   = 10;                          // the digit to the right does 10× more
+    const repeats  = target * cycles - 1;         // 0-based repeats
+    const duration = factor / (cycles ** i);      // left digit 10× slower than right one
+    const moveY    = target * 80;                 // pixels per step
 
-  digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const id = `#n${statId}-${totalDigits - index - 1}`
-    const duration = (index === 0 ? maxTime : maxTime / ((2 ** index) * 2))
-    const repeat = (index === 0 ? 0 : ((2 ** index) * 2) - 1)
-    const movement = digit === "0" ? 800 : Number(digit) * 80
+    tl.to(
+      `#n${statId}-${digits.length - 1 - i}`,
+      {
+        y: `-=${moveY}`,
+        repeat: repeats,
+        duration,
+        ease: 'none',
+      },
+      0                                            // all start together
+    );
+  });
 
-    animTl.to(id, { y: `-=${movement}`, repeat, duration }, "p1")
-  })
-
-  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
-
-  animTl.play()
+  tl.play();
 }
 
 function callback(entries: IntersectionObserverEntry[]) {
