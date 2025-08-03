@@ -299,6 +299,10 @@ function itemProps(item: { name: string; owner: string }) {
 function switchComponent(item: typeof items[0]) {
   chosenComponentId.value = item.id
   selectedComponent.value = item.component.default
+
+  const urlParams = new URLSearchParams(window.location.search)
+  urlParams.set("id", String(item.id))
+  window.history.replaceState({}, "", `?${urlParams.toString()}`)
 }
 
 watch(selectedItem, switchComponent)
