@@ -10,8 +10,8 @@
 
         <v-divider class="my-4" />
 
-        <v-row>
-          <v-col>
+        <v-col>
+          <v-row>
             <v-select
               v-model="selectedItem"
               :item-props="itemProps"
@@ -20,8 +20,15 @@
               return-object
               variant="outlined"
             />
-          </v-col>
-        </v-row>
+            <v-btn
+              color="primary"
+              class="ml-6"
+              id="replay-button"
+              text="Replay"
+              @click="rerenderKey++"
+            />
+          </v-row>
+        </v-col>
       </v-col>
     </v-row>
 
@@ -44,7 +51,7 @@
           <v-card-text>
             <Component
               :is="selectedComponent"
-              :key="chosenComponentId"
+              :key="chosenComponentId + '-' + rerenderKey"
             />
           </v-card-text>
         </v-card>
@@ -286,6 +293,7 @@ const items: Array<{ id: number; name: string; owner: string; component: Compone
 ]
 
 const chosenComponentId = ref(0)
+const rerenderKey = ref(0)
 const selectedComponent = shallowRef<Component | null>(null)
 const selectedItem = ref(items[0])
 
@@ -298,6 +306,7 @@ function itemProps(item: { name: string; owner: string }) {
 
 function switchComponent(item: typeof items[0]) {
   chosenComponentId.value = item.id
+  rerenderKey.value = 0
   selectedComponent.value = item.component.default
 
   const urlParams = new URLSearchParams(window.location.search)
@@ -325,3 +334,13 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+:deep(.v-input__details) {
+  display: none !important;
+}
+
+#replay-button {
+  align-self: center;
+}
+</style>
