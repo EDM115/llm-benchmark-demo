@@ -36,7 +36,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite --port 8888",
-    "preview": "vite preview --port 8000"
+    "preview": "vite preview --port 8000",
+    "pages": "git subtree push --prefix dist origin gh-pages"
   },
   "type": "module",
   "version": "1.0.0"
