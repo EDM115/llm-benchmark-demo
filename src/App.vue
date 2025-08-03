@@ -3,6 +3,27 @@
     <v-main>
       <Suspense>
         <Home />
+
+        <template #fallback>
+          <v-container>
+            <v-row
+              align="center"
+              align-content="center"
+              justify="center"
+            >
+              <v-col align="center">
+                <h1>LLM Benchmark Demo</h1>
+
+                <v-divider class="my-4" />
+
+                <v-progress-circular indeterminate color="primary" />
+                <br />
+                <br />
+                <b>Loading all components...</b>
+              </v-col>
+            </v-row>
+          </v-container>
+        </template>
       </Suspense>
     </v-main>
   </v-app>
