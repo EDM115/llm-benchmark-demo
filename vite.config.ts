@@ -10,11 +10,6 @@ const config = defineConfig({
     rollupOptions: {
       output: {
         compact: true,
-        sanitizeFileName: (name) => {
-          return name
-            .replace(/\s+/g, "-")
-            .replace(/[^a-zA-Z0-9.-]/g, "-")
-        },
         validate: true,
       },
     },
