@@ -1,0 +1,67 @@
+@use "vuetify/settings" with (
+  $body-font-family: (sans-serif),
+  $color-pack: false,
+);
+
+@function var-color($name) {
+  @return rgb(var(--#{$name}));
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var-color(v-theme-background);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var-color(v-theme-text-lighten-2);
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var-color(v-theme-primary);
+}
+
+a {
+  color: var-color(v-theme-primary);
+  text-decoration: none;
+  transition: all 0.4s ease-in-out;
+}
+
+a:hover {
+  color: var-color(v-theme-secondary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+summary h1,
+summary h2,
+summary h3,
+summary h4,
+summary h5,
+summary h6 {
+  display: inline;
+}
+
+p, li {
+  text-wrap: pretty;
+}
+
+.numbmask > .numb {
+  font-family: "Fira Code", monospace !important;
+  font-optical-sizing: auto !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+}
