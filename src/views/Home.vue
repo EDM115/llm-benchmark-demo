@@ -12,11 +12,14 @@
 
         <v-col>
           <v-row>
-            <v-select
+            <v-autocomplete
               v-model="selectedItem"
+              :filter-keys="['raw.name', 'raw.owner']"
+              hide-details
               :item-props="itemProps"
               :items="items"
               label="Component"
+              no-data-text="Nothing found, type 'original' to get back to the original code"
               return-object
               variant="outlined"
             />
