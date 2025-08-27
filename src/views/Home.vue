@@ -292,7 +292,7 @@ const items: Item[] = [
 ]
 
 function generateId(item: Item) {
-  return (item.owner + item.name).replace(/\s+/g, "").toLowerCase()
+  return (item.owner + item.name).replace(/[\s\-\(\)]+/g, "").toLowerCase()
 }
 
 const chosenComponentId = ref(generateId(initialItem))
