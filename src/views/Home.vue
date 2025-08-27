@@ -275,9 +275,9 @@ const items: Item[] = [
     component: await import("@/components/MoonshotAI/KimiK2.vue"),
   },
   {
-    name: "GLM 4.5",
+    name: "GLM 4.5 Thinking",
     owner: "Z.ai",
-    component: await import("@/components/Zai/GLM4.5.vue"),
+    component: await import("@/components/Zai/GLM4.5Thinking.vue"),
   },
   {
     name: "Horizon Beta",
