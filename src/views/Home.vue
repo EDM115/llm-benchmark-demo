@@ -275,6 +275,11 @@ const items: Item[] = [
     component: await import("@/components/MoonshotAI/KimiK20711.vue"),
   },
   {
+    name: "Kimi K2 (0905)",
+    owner: "Moonshot AI",
+    component: await import("@/components/MoonshotAI/KimiK20905.vue"),
+  },
+  {
     name: "GLM 4.5 Thinking",
     owner: "Z.ai",
     component: await import("@/components/Zai/GLM4.5Thinking.vue"),
