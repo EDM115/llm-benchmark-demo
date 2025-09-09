@@ -1,8 +1,8 @@
 <template>
   <v-col>
     <v-row
-      v-for="stat in stats"
-      id="statsCounters"
+      v-for="(stat, statIndex) in stats"
+      :id="'statsCounters-' + statIndex"
       :key="stat.id"
       class="d-flex justify-center align-center"
     >
@@ -13,25 +13,25 @@
         <v-card-text>
           <div
             id="container"
-            class=""
+            class="counter-container"
           >
             <div
               id="counter"
-              class="middle d-flex justify-center align-center"
+              class="counter"
             >
               <div
                 v-for="(digit, index) in String(stat.value).split('')"
-                :id="'digit-container-' + stat.id + '-' + ((String(stat.value).split('').length) - index - 1)"
                 :key="index"
-                class="numbmask"
+                class="digit-container"
+                :style="{ order: -index }"
               >
                 <div
-                  :id="'n' + stat.id + '-' + ((String(stat.value).split('').length) - index - 1)"
+                  :id="'n' + stat.id + '-' + index"
                   class="numb"
                 >
-                  0 1 2 3 4 5 6 7 8 9 0
+                  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
                 </div>
-                <div class="gradmask fullframe" />
+                <div class="gradmask" />
               </div>
             </div>
           </div>
@@ -44,10 +44,9 @@
 <script setup lang="ts">
 import { gsap } from "gsap"
 import { ofetch } from "ofetch"
-import { onMounted, ref } from "vue"
+import { nextTick, onMounted, ref } from "vue"
 
 let observer: IntersectionObserver | null = null
-// Different from what you see ? I include private repos here too :)
 const projectsNumber = ref(65)
 
 const projectsLoc = ref({
@@ -55,15 +54,11 @@ const projectsLoc = ref({
   "ban-all-except-admins": 441,
   "better-maps": 13863,
   "booleanfix": 534,
-  // "boubot": 4177,
   "bulk-youtube-download": 293,
-  // "cursedChess-bot": 2658,
-  // "DiceWizard": 2741,
   "dotfiles": 35267,
   "EDM115": 296,
   "website": 11337,
   "website-v1": 137999,
-  // "edm115.fot.one / edm115.shadd.eu.org / edm115.ethar.xyz / walad.link/edm115": 384 + 3061,
   "EDM115.github.io": 90,
   "EDM115-discord-bot": 1198,
   "EDM115-ohmyposh-theme": 671,
@@ -83,16 +78,13 @@ const projectsLoc = ref({
   "telegram-auto-upload-folder": 369,
   "telegram-backup-dump": 512,
   "The-Very-Restrictive-License": 311,
-  // "ThunderBot": 2196,
   "unrar-alpine": 1689,
   "unzip-bot": 7469,
   "useful-stuff": 794,
   "VGM-KHI-download": 310,
   "web-logs": 303,
-
   "school-codes-v2": 885105,
   "IUT": 396155,
-
   // archived
   "bots-status": 214,
   "drive_uploader": 1163,
@@ -112,6 +104,7 @@ const projectsLoc = ref({
   "vscode-extension-test": 2750,
   "Werewolf_Discord_bot": 70,
 })
+
 const linesOfCode = ref(Object.values(projectsLoc.value).reduce((acc, cur) => acc + cur, 0))
 
 const stats = ref([
@@ -135,73 +128,73 @@ async function fetchProjectsNumber() {
   }
 }
 
-function animateDigits(statId: string, value: number) {
-  const digitArray = String(value).split("")
-  const maxTime = 8
-  const digitHeight = 80 // Each digit is 80px apart based on line-height
-
-  const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0, paused: true })
-
+function animateCounter(statId: number, targetValue: number) {
+  const digitArray = String(targetValue).padStart(5, '0').split('') // Pad to fixed width for consistency
+  const totalDuration = 3 // Total animation time in seconds
+  const digitHeight = 80 // Height of each digit in pixels
+  
+  // Clear any existing animations
+  gsap.killTweensOf(`#n${statId}-*`)
+  
+  // Create timeline for this counter
+  const tl = gsap.timeline()
+  
+  // Animate each digit independently
   digitArray.forEach((digit, index) => {
-    const totalDigits = digitArray.length
-    const digitPosition = totalDigits - index - 1 // Position from right (0 = rightmost)
-    const id = `#n${statId}-${digitPosition}`
-    const digitValue = Number(digit)
+    const element = document.querySelector(`#n${statId}-${index}`) as HTMLElement
+    if (!element) return
     
-    // Calculate movement based on position
-    let totalMovement = 0
+    const targetPosition = -(parseInt(digit) * digitHeight)
+    const currentPosition = 0 // Start from 0
     
-    if (digitPosition === 0) {
-      // Rightmost digit: just move to the target digit
-      totalMovement = digitValue * digitHeight
+    // Calculate relative speed: rightmost digits move fastest
+    const relativeSpeed = Math.pow(10, digitArray.length - 1 - index)
+    const digitDuration = totalDuration / relativeSpeed
+    
+    // For the odometer effect, we need to animate through all the intermediate values
+    const startDigit = 0
+    const endDigit = parseInt(digit)
+    
+    if (index === 0) {
+      // Leftmost digit - moves slowest, only animates to its final value
+      tl.to(element, {
+        y: targetPosition,
+        duration: totalDuration,
+        ease: "power2.inOut"
+      }, 0)
     } else {
-      // Higher-order digits: do full rotations based on their value
-      // Each full rotation is 10 digits * digitHeight = 800px
-      const fullRotations = digitValue
-      const finalPosition = digitValue * digitHeight
-      totalMovement = (fullRotations * 10 * digitHeight) + finalPosition
-    }
-    
-    // Calculate timing - each digit to the left moves slower
-    const duration = maxTime / Math.pow(2, digitPosition)
-    
-    if (totalMovement > 0) {
-      animTl.to(id, { 
-        y: `-=${totalMovement}`, 
-        duration: duration,
-        ease: "none"
-      }, 0) // Start all animations at the same time
+      // Other digits - create odometer effect based on left digit's movement
+      const leftDigitIndex = index - 1
+      // ! Added the fallback here
+      const leftDigitFinalValue = parseInt(digitArray[leftDigitIndex] ?? "0")
+      
+      // This digit needs to complete 10 full cycles for each increment of the left digit, plus its final value
+      const totalRotations = leftDigitFinalValue * 10 + endDigit
+      
+      tl.to(element, {
+        y: -(totalRotations * digitHeight),
+        duration: totalDuration,
+        ease: "none" // Linear for smooth odometer effect
+      }, 0)
     }
   })
-
-  // Apply easing to the entire timeline
-  gsap.to(animTl, { 
-    duration: maxTime, 
-    progress: 1, 
-    ease: "power3.inOut" 
-  })
-
-  animTl.play()
+  
+  // Ensure all animations complete together
+  tl.timeScale(1)
 }
 
 function callback(entries: IntersectionObserverEntry[]) {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
-      const statElement = entry.target
-      const numbElement = statElement.querySelector(".numb")
-      const elementId = numbElement?.id ?? ""
-      const idParts = elementId.split("-")
-      const statId = idParts?.slice(1) ?? ""
-      // ! Added a "get first element" logic
-      // ! Added a parseInt fallback
-      const statIndex = parseInt(statId[0] ?? "0")
-      const statValue = !isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length
-        ? stats.value[statIndex]?.value ?? 0
-        : 0
-
-      // ! Added a "get first element" logic
-      // ! Added a fallback to "0" in case of empty array
-      animateDigits(statId[0] ?? "0", statValue ?? 0)
+      const statElement = entry.target as HTMLElement
+      // ! Added the fallback here
+      const statIndex = parseInt(statElement.id.split('-')[1] ?? "0") || 0
+      const stat = stats.value[statIndex]
+      
+      if (stat) {
+        animateCounter(stat.id, stat.value)
+      }
+      
       observer?.unobserve(entry.target)
     }
   })
@@ -214,72 +207,96 @@ onMounted(async () => {
     stats.value[0].value = projectsNumber.value
   }
 
-  observer = new IntersectionObserver(callback, {
-    root: null,
-    rootMargin: "0px",
-    threshold: 0.8,
+  // Wait a bit for DOM to be ready
+  nextTick(() => {
+    observer = new IntersectionObserver(callback, {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.8,
+    })
+    
+    document.querySelectorAll("[id^='statsCounters-']").forEach((el) => {
+      observer?.observe(el)
+    })
   })
-  document.querySelectorAll("#statsCounters").forEach((el) => observer?.observe(el))
 })
 </script>
 
 <style scoped>
-.middle {
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.fullframe {
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#container {
+.counter-container {
   position: relative;
   overflow: hidden;
   color: rgb(var(--v-theme-primary));
   width: 100%;
-  height: 76px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-#counter {
-  width: 100%;
-  height: 76px;
+.counter {
+  display: flex;
+  flex-direction: row-reverse; /* Rightmost digit first */
+  height: 80px;
   overflow: hidden;
   position: relative;
+  gap: 2px;
 }
 
-.numbmask {
+.digit-container {
   position: relative;
-  margin: 0px 1px;
-  height: 100%;
-  width: 33px;
+  height: 80px;
+  width: 40px;
   background-color: rgb(var(--v-theme-background-lighten-2));
-  color: rgb(var(--v-theme-primary));
-  overflow: hidden;
-  float: right;
   border-radius: 8px;
   box-shadow: inset 0px 5px 5px rgba(0, 0, 0, 0.5), inset 0px -5px 5px rgba(0, 0, 0, 0.5);
-  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .numb {
   color: rgb(var(--v-theme-primary));
   text-align: center;
-  font: "Fira Code", monospace;
+  font-family: "Fira Code", monospace;
   font-size: 50px;
   font-weight: bold;
   height: 100%;
   width: 100%;
   line-height: 80px;
-  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  will-change: transform;
 }
 
 .gradmask {
   position: absolute;
-  background: transparent;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 45%,
+    rgb(var(--v-theme-background-lighten-2)) 45%,
+    rgb(var(--v-theme-background-lighten-2)) 55%,
+    transparent 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Ensure proper stacking */
+.digit-container {
+  z-index: 1;
+}
+
+.numb {
+  z-index: 0;
 }
 </style>

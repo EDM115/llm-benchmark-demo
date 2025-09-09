@@ -139,7 +139,8 @@ async function fetchProjectsNumber() {
 }
 
 function animateDigits(statId: number, newValue: number) {
-  const oldValue = stats.value[statId].animatedValue
+  // ! Added the non-null assertion here
+  const oldValue = stats.value[statId]?.animatedValue
 
   const animTl = gsap.timeline({ defaults: { ease: "power3.inOut" }})
 
@@ -167,7 +168,7 @@ function callback(entries: IntersectionObserverEntry[]) {
         ? stats.value[statIndex]?.value ?? 0
         : 0
 
-      // ! Added the number cast
+      // ! Added the number cast here
       animateDigits(Number(statId), statValue ?? 0)
       observer?.unobserve(entry.target)
     }

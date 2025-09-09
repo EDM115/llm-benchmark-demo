@@ -188,7 +188,8 @@ function animateDigits(statId: string, value: number) {
 
   digits.forEach((digitStr, position) => {
     const digit = parseInt(digitStr);
-    const element = digitElements[position];
+    // ! Added the non-null assertion here
+    const element = digitElements[position]!;
     const isLastDigit = position === 0;
     const isFirstDigit = position === digits.length - 1;
     

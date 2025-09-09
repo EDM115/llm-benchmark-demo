@@ -270,9 +270,9 @@ const items: Item[] = [
     component: await import("@/components/AlibabaCloud/Qwen3235BA22B2507.vue"),
   },
   {
-    name: "Kimi K2",
+    name: "Kimi K2 (0711)",
     owner: "Moonshot AI",
-    component: await import("@/components/MoonshotAI/KimiK2.vue"),
+    component: await import("@/components/MoonshotAI/KimiK20711.vue"),
   },
   {
     name: "GLM 4.5 Thinking",
@@ -283,6 +283,16 @@ const items: Item[] = [
     name: "Horizon Beta",
     owner: "Unknown ?",
     component: await import("@/components/Unknown/HorizonBeta.vue"),
+  },
+  {
+    name: "Sonoma Dusk Alpha",
+    owner: "Unknown ?",
+    component: await import("@/components/Unknown/SonomaDuskAlpha.vue"),
+  },
+  {
+    name: "Sonoma Sky Alpha",
+    owner: "Unknown ?",
+    component: await import("@/components/Unknown/SonomaSkyAlpha.vue"),
   },
   {
     name: "Fixed code",

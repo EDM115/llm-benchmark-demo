@@ -178,7 +178,8 @@ function animateDigits(statId: string, value: number) {
   const animTl = gsap.timeline({ defaults: { ease: "none" }, repeat: 0 });
 
   for (let i = digitArray.length - 1; i >= 0; i--) {
-    const digit = digitArray[i];
+    // ! Added the non-null assertion here
+    const digit = digitArray[i]!;
     const id = `#n${statId}-${i}`;
     const duration = maxTime / (2 ** (digitArray.length - 1 - i));
 

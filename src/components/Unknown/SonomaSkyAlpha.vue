@@ -4,7 +4,7 @@
       v-for="stat in stats"
       id="statsCounters"
       :key="stat.id"
-      class="stats-counter d-flex justify-center align-center"
+      class="d-flex justify-center align-center"
     >
       <v-card class="ma-2">
         <v-card-title style="overflow-wrap: normal; overflow: visible; white-space: wrap;">
@@ -78,19 +78,12 @@
 </template>
 
 <script setup lang="ts">
-/* --------------------------------------------------------------- *
- *  This file contains only the **script** part of your component.
- *  The template (HTML) and the <style> block from your original
- *  component can stay unchanged.
- * --------------------------------------------------------------- */
-
 import { gsap } from "gsap"
 import { ofetch } from "ofetch"
 import { onMounted, ref } from "vue"
 
-// ----------------------------------------------------
-//   Data (projects, LOC, etc.) – unchanged
-// ----------------------------------------------------
+let observer: IntersectionObserver | null = null
+// Different from what you see ? I include private repos here too :)
 const projectsNumber = ref(65)
 
 const projectsLoc = ref({
@@ -155,20 +148,14 @@ const projectsLoc = ref({
   "vscode-extension-test": 2750,
   "Werewolf_Discord_bot": 70,
 })
+const linesOfCode = ref(Object.values(projectsLoc.value).reduce((acc, cur) => acc + cur, 0))
 
-const linesOfCode = ref(Object.values(projectsLoc.value).reduce((a, b) => a + b, 0))
-
-/** stats that are shown on the page */
 const stats = ref([
   { id: 0, name: "Projects", value: projectsNumber.value },
-  { id: 1, name: "Users", value: 46_568 },
-  // **IMPORTANT** – we want a *plain number* for gsap, not a Ref.
+  { id: 1, name: "Users", value: 46123 },
   { id: 2, name: "Lines of Code", value: linesOfCode.value },
 ])
 
-/* ---------------------------------------------------- *
- *  1️⃣  FETCH GITHUB PROJECTS COUNT
- * ---------------------------------------------------- */
 async function fetchProjectsNumber() {
   try {
     const { public_repos } = await ofetch<{ public_repos: number }>("https://api.github.com/users/EDM115", {
@@ -184,122 +171,56 @@ async function fetchProjectsNumber() {
   }
 }
 
-/* ---------------------------------------------------- *
- *  2️⃣  ODOMETER‑STYLE ANIMATION
- * ---------------------------------------------------- */
+function animateDigits(statId: string, value: number) {
+  const length = String(value).length
+  const maxTime = 8
+  const heightPerDigit = 80
 
-/**
- * Animate the digits for a specific stat.
- *
- * @param statId  The `id` that you used when constructing the
- *               DOM ids (e.g. `0`, `1`, …)
- * @param value   The **final** number we want to show.
- */
-function animateDigits(statId: string | number, value: number) {
-  // Guard against non‑numeric values (e.g. a ref that hasn't been
-  // resolved yet).  We simply do nothing.
-  if (typeof value !== "number" || Number.isNaN(value)) return
+  const animTl = gsap.timeline({ paused: true })
 
-  const digits = String(value).split("")               // e.g. ["2","7"]
-  const totalDigits = digits.length
-  const maxDuration = 2 // seconds – you can tweak this
+  for (let posFromRight = 0; posFromRight < length; posFromRight++) {
+    const totalSteps = Math.floor(value / Math.pow(10, posFromRight))
+    const movement = totalSteps * heightPerDigit
+    const id = `#n${statId}-${posFromRight}`
 
-  // Build a timeline that starts all tweens at time 0 so that
-  // every digit finishes **together**.
-  const tl = gsap.timeline({ paused: true })
-
-  // Walk from *left* (most‑significant) to *right* (least‑significant)
-  digits.forEach((_, idx) => {
-    // Position of this digit in the DOM (`0` = rightmost)
-    const pos = totalDigits - idx - 1
-
-    // The number formed by all digits **up to** this one.
-    //   "27" → left digit → 2
-    //   "27" → right digit → 27
-    const steps = Number(digits.slice(0, idx + 1).join('')) // e.g. 27
-
-    // Each step moves the inner `.numb` 80 px upward
-    const distance = steps * 80 // 80 px = height of one digit line
-
-    const selector = `#n${statId}-${pos}`
-
-    // Animate the *whole* distance in the *same* total time
-    tl.to(
-      selector,
-      { y: -distance, duration: maxDuration, ease: "none" },
-      0 // <-- start time (all start together)
-    )
-  })
-
-  // When the timeline is ready, play it
-  tl.play()
-}
-
-/* ---------------------------------------------------- *
- *  3️⃣  INTERSECTION OBSERVER – trigger animation
- * ---------------------------------------------------- */
-function callback(entries: IntersectionObserverEntry[]) {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return
-
-    const statEl = entry.target as HTMLElement
-    const numb = statEl.querySelector(".numb") as HTMLElement | null
-    if (!numb) return
-
-    // Extract the stat id from the DOM id (`n0-0`, `n1-2`, …)
-    const idParts = numb.id.split("-")            // ["n0","0"] → ["0"]
-    const statId = (idParts[0] ?? "").slice(1)      // "0"
-    const index = Number(statId)
-
-    // Guard for out‑of‑range / missing stats
-    if (Number.isNaN(index) || index < 0 || index >= stats.value.length) {
-      observer?.unobserve(entry.target)
-      return
-    }
-
-    // The value may be a plain number or a Ref<number>
-    // ! Added the non-null assertion here
-    const rawValue = stats.value[index]?.value
-    const numericValue = typeof rawValue === "object" && "value" in rawValue
-      ? (rawValue as any).value
-      : rawValue
-
-    animateDigits(statId, Number(numericValue) ?? 0)
-
-    // Only animate once
-    observer?.unobserve(entry.target)
-  })
-}
-
-/* ---------------------------------------------------- *
- *  4️⃣  MOUNT & OBSERVE
- * ---------------------------------------------------- */
-let observer: IntersectionObserver | null = null
-
-onMounted(async () => {
-  // ----------------------------------------------------------------
-  //  Fetch the real number of public repos and update the first stat
-  // ----------------------------------------------------------------
-  await fetchProjectsNumber()
-  if (stats.value[0]?.value !== projectsNumber.value) {
-    // ! Added the non-null assertion here
-    stats.value[0]!.value = projectsNumber.value
+    animTl.to(id, { y: `-${movement}`, duration: maxTime, ease: "none" }, 0)
   }
 
-  // ----------------------------------------------------------------
-  //  Set up the IntersectionObserver
-  // ----------------------------------------------------------------
+  gsap.to(animTl, { duration: maxTime, progress: 1, ease: "power3.inOut" })
+}
+
+function callback(entries: IntersectionObserverEntry[]) {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const statElement = entry.target
+      const numbElement = statElement.querySelector(".numb")
+      const elementId = numbElement?.id ?? ""
+      const idParts = elementId.split("-")
+      const statId = idParts[0]?.slice(1) ?? ""
+      const statIndex = parseInt(statId)
+      const statValue = !isNaN(statIndex) && statIndex >= 0 && statIndex < stats.value.length
+        ? stats.value[statIndex]?.value ?? 0
+        : 0
+
+      animateDigits(statId, statValue ?? 0)
+      observer?.unobserve(entry.target)
+    }
+  })
+}
+
+onMounted(async () => {
+  await fetchProjectsNumber()
+
+  if (stats.value[0] !== undefined && stats.value[0].value !== projectsNumber.value) {
+    stats.value[0].value = projectsNumber.value
+  }
+
   observer = new IntersectionObserver(callback, {
     root: null,
     rootMargin: "0px",
     threshold: 0.8,
   })
-
-  // Every `<v-row>` that renders a counter gets the class
-  // `stats-counter`.  We use a class selector because an
-  // `id` must be unique, and you were using the same id
-  // (`#statsCounters`) on many rows.
-  document.querySelectorAll('.stats-counter').forEach(el => observer!.observe(el))
+  document.querySelectorAll("#statsCounters").forEach((el) => observer?.observe(el))
 })
 </script>
 
@@ -322,12 +243,12 @@ onMounted(async () => {
   overflow: hidden;
   color: rgb(var(--v-theme-primary));
   width: 100%;
-  height: 76px;
+  height: 80px;
 }
 
 #counter {
   width: 100%;
-  height: 76px;
+  height: 80px;
   overflow: hidden;
   position: relative;
 }
@@ -355,6 +276,7 @@ onMounted(async () => {
   height: 100%;
   width: 100%;
   line-height: 80px;
+  white-space: pre-line;
   z-index: 1;
 }
 
