@@ -195,6 +195,11 @@ const items: Item[] = [
     component: await import("@/components/Anthropic/Claude4Opus.vue"),
   },
   {
+    name: "Claude 4.5 Sonnet Reasoning High",
+    owner: "Anthropic",
+    component: await import("@/components/Anthropic/Claude4.5SonnetReasoningHigh.vue"),
+  },
+  {
     name: "Mistral Large 2.1",
     owner: "MistralAI",
     component: await import("@/components/MistralAI/MistralLarge2.1.vue"),
