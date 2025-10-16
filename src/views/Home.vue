@@ -236,23 +236,23 @@ const items: Item[] = [
   },
   {
     name: "Chat (V3 0324)",
-    owner: "Deepseek",
-    component: await import("@/components/Deepseek/ChatV30324.vue"),
+    owner: "DeepSeek",
+    component: await import("@/components/DeepSeek/ChatV30324.vue"),
   },
   {
     name: "Reasoner (R1 0528)",
-    owner: "Deepseek",
-    component: await import("@/components/Deepseek/ReasonerR10528.vue"),
+    owner: "DeepSeek",
+    component: await import("@/components/DeepSeek/ReasonerR10528.vue"),
   },
   {
     name: "V3.1 Non-Think",
-    owner: "Deepseek",
-    component: await import("@/components/Deepseek/V3.1NonThink.vue"),
+    owner: "DeepSeek",
+    component: await import("@/components/DeepSeek/V3.1NonThink.vue"),
   },
   {
     name: "V3.1 Think",
-    owner: "Deepseek",
-    component: await import("@/components/Deepseek/V3.1Think.vue"),
+    owner: "DeepSeek",
+    component: await import("@/components/DeepSeek/V3.1Think.vue"),
   },
   {
     name: "Grok 2",
@@ -275,6 +275,11 @@ const items: Item[] = [
     component: await import("@/components/AlibabaCloud/Qwen3235BA22B2507.vue"),
   },
   {
+    name: "Qwen 3 Max",
+    owner: "Alibaba Cloud",
+    component: await import("@/components/AlibabaCloud/Qwen3Max.vue"),
+  },
+  {
     name: "Kimi K2 (0711)",
     owner: "Moonshot AI",
     component: await import("@/components/MoonshotAI/KimiK20711.vue"),
@@ -288,6 +293,11 @@ const items: Item[] = [
     name: "GLM 4.5 Thinking",
     owner: "Z.ai",
     component: await import("@/components/Zai/GLM4.5Thinking.vue"),
+  },
+  {
+    name: "GLM 4.6 Thinking",
+    owner: "Z.ai",
+    component: await import("@/components/Zai/GLM4.6Thinking.vue"),
   },
   {
     name: "Horizon Beta",
