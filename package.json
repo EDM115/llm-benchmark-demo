@@ -21,7 +21,7 @@
     "sass-embedded": "~1.93.2",
     "sass-loader": "~16.0.5",
     "typescript": "~5.9.3",
-    "vite": "~7.1.10",
+    "vite": "~7.1.11",
     "vite-plugin-vuetify": "~2.1.2"
   },
   "homepage": "https://github.com/EDM115/llm-benchmark-demo",
