@@ -64,16 +64,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, watch, type Component } from "vue"
+import {
+  onMounted,
+  ref,
+  shallowRef,
+  watch,
+  type Component,
+} from "vue"
 
 type ComponentModule = {
-  default: Component
+  default: Component;
 }
 
 type Item = {
-  name: string
-  owner: string
-  component: ComponentModule
+  name: string;
+  owner: string;
+  component: ComponentModule;
 }
 
 const initialItem: Item = {
@@ -315,6 +321,11 @@ const items: Item[] = [
     component: await import("@/components/Unknown/SonomaSkyAlpha.vue"),
   },
   {
+    name: "Polaris Alpha",
+    owner: "Unknown ?",
+    component: await import("@/components/Unknown/PolarisAlpha.vue"),
+  },
+  {
     name: "Fixed code",
     owner: "EDM115",
     component: await import("@/components/EDM115/FixedCode.vue"),
@@ -322,7 +333,7 @@ const items: Item[] = [
 ]
 
 function generateId(item: Item) {
-  return (item.owner + item.name).replace(/[\s\-\(\)\?]+/g, "").toLowerCase()
+  return (item.owner + item.name).replace(/[\s\-()?]+/g, "").toLowerCase()
 }
 
 const chosenComponentId = ref(generateId(initialItem))
