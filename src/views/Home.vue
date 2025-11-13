@@ -136,6 +136,11 @@ const items: Item[] = [
     component: await import("@/components/OpenAI/GPT5Thinking.vue"),
   },
   {
+    name: "GPT 5.1 (Thinking Extended)",
+    owner: "OpenAI",
+    component: await import("@/components/OpenAI/GPT5.1ThinkingExtended.vue"),
+  },
+  {
     name: "Gemini 1.5 Pro",
     owner: "GoogleAI",
     component: await import("@/components/GoogleAI/Gemini1.5Pro.vue"),
