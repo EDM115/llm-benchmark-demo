@@ -136,6 +136,11 @@ const items: Item[] = [
     component: await import("@/components/OpenAI/GPT5Thinking.vue"),
   },
   {
+    name: "Raptor mini (Thinking)",
+    owner: "OpenAI",
+    component: await import("@/components/OpenAI/RaptorMiniThinking.vue"),
+  },
+  {
     name: "GPT 5.1 (Thinking Extended)",
     owner: "OpenAI",
     component: await import("@/components/OpenAI/GPT5.1ThinkingExtended.vue"),
