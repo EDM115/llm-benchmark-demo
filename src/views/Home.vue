@@ -166,6 +166,11 @@ const items: Item[] = [
     component: await import("@/components/GoogleAI/Gemini2.5Pro.vue"),
   },
   {
+    name: "Gemini 3 Pro Preview (Thinking High)",
+    owner: "GoogleAI",
+    component: await import("@/components/GoogleAI/Gemini3ProPreviewThinkingHigh.vue"),
+  },
+  {
     name: "LLaMA 3 70b",
     owner: "MetaAI",
     component: await import("@/components/MetaAI/LLaMA370b.vue"),
@@ -279,6 +284,11 @@ const items: Item[] = [
     name: "Grok 3",
     owner: "xAI",
     component: await import("@/components/xAI/Grok3.vue"),
+  },
+  {
+    name: "Grok Code Fast 1",
+    owner: "xAI",
+    component: await import("@/components/xAI/GrokCodeFast1.vue"),
   },
   {
     name: "Qwen 3 Coder",
