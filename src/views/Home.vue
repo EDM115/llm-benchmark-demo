@@ -346,6 +346,11 @@ const items: Item[] = [
     component: await import("@/components/Unknown/PolarisAlpha.vue"),
   },
   {
+    name: "Bert-Nebulon Alpha",
+    owner: "Unknown ?",
+    component: await import("@/components/Unknown/BertNebulonAlpha.vue"),
+  },
+  {
     name: "Fixed code",
     owner: "EDM115",
     component: await import("@/components/EDM115/FixedCode.vue"),
